@@ -1,0 +1,2 @@
+FLask ~= 0.10
+requests ~= 2.10
