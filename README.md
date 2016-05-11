@@ -1,10 +1,11 @@
-Currently a work in progress.
+Currently a work in progress. Source code is python3 compatible.
 
-Source code is python3 compatible.
+You will need an API key of your own from http://en.ilmatieteenlaitos.fi/.
 
 #### To try out:
 ```
 $ pip install -r requirements.txt  
+$ export FMI_API_KEY=<your API key from Ilmatieteen laitos>
 $ python main.py
 ```
 
