@@ -1,48 +1,28 @@
 from flask import Flask, request, abort
 
 import os
-import location_data_import
+import locationDataImporter
 import fmi_forecast
+from forecastImporter import ForecastImporter
 
 app = Flask(__name__)
-locationData = location_data_import.getLocationData()
-locationDictionary = {}
-for location in locationData:
-    locationDictionary[location['name']] = location
-
-locationNames = [location['name'] for location in locationData]
-locationNames = sorted(locationNames, key=str.lower)
-
-def binarySearchLocation(locationToSearch, lowerbound=None, upperbound=None):
-    searchAsLower = locationToSearch.lower()
-    if upperbound == None:
-        lowerbound = 0
-        upperbound = len(locationNames)-1
-    midpoint = (lowerbound + upperbound) // 2
-    midvalue = locationNames[midpoint].lower()
-    print(midvalue)
-    if midvalue.startswith(searchAsLower):
-        return locationNames[midpoint]
-    elif lowerbound == upperbound:
-        return None
-    elif searchAsLower < midvalue:
-        return binarySearchLocation(locationToSearch, lowerbound, midpoint-1)
-    elif searchAsLower > midvalue:
-        return binarySearchLocation(locationToSearch, midpoint+1, upperbound)
-    else:
-        return None
+locationData = locationDataImporter.getLocationData()
+forecastData = ForecastImporter()
+forecastData.fetchData()
 
 @app.route("/forecast", methods=['GET'])
-def hello():
+def forecast():
     locationRequested = request.args.get('location', '')
     if locationRequested is '':
         abort(404)
 
-    location = binarySearchLocation(locationRequested)
-    if location is '':
+    location = locationData.searchLocation(locationRequested)
+
+    if location is None or location is '':
         abort(404)
     else:
-        return str(locationDictionary[location])
+        closestForecasts = forecastData.findClosestForecastToPoint((location['latitude'], location['longitude']))
+        return "<br>".join([str(forecast) for forecast in closestForecasts]) + "<br><br>" + str(location)
 
 if __name__ == "__main__":
     app.run(debug=True)

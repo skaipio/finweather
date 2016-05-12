@@ -7,3 +7,9 @@ class Forecast:
 
     def __str__(self):
         return "Forecast estimated %s\u00b0C at %s, %s" % (self.estimation, self.location, self.time)
+
+    def latitude(self):
+        return self.location[0]
+
+    def longitude(self):
+        return self.location[1]

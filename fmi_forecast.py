@@ -34,7 +34,8 @@ def _findInElem(element, namespace, tag):
     return element.getElementsByTagNameNS(namespaceUris[namespace], tag)
 
 def _parseForecast(wfsElement):
-    position = _findInElem(wfsElement, 'gml', 'pos').item(0).firstChild.nodeValue.split()
+    (lat, lon) = _findInElem(wfsElement, 'gml', 'pos').item(0).firstChild.nodeValue.strip().split()
+    position = (float(lat), float(lon))
     time = _findInElem(wfsElement, 'BsWfs', 'Time').item(0).firstChild.nodeValue
     value = _findInElem(wfsElement, 'BsWfs', 'ParameterValue').item(0).firstChild.nodeValue
     return Forecast(position, time, value)
