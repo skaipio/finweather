@@ -1,29 +1,30 @@
 import os
 from bisect import bisect_left
-import fmi_forecast
+import fmi_forecast_api
 from itertools import groupby
 from operator import attrgetter, itemgetter
+from common import Point
 
 _latIndex, _lonIndex = 0, 1
 
-class ForecastImporter:
+class Forecaster:
 
     def fetchData(self):
-        forecasts = fmi_forecast.getForecasts()
+        forecasts = fmi_forecast_api.getForecasts()
         self.__forecasts = {}
         self.__locations = []
         for location, forecastGroup in groupby(forecasts, attrgetter('location')):
             self.__locations.append(location)
             self.__forecasts[location] = list(forecastGroup)
 
-        self.__sortedByLatitude = sorted(self.__locations, key=itemgetter(_latIndex, _lonIndex))
-        self.__sortedByLongitude = sorted(self.__locations, key=itemgetter(_lonIndex, _latIndex))
+        self.__sortedByLatitude = sorted(self.__locations)
+        self.__sortedByLongitude = sorted(self.__locations, key=lambda location: tuple(reversed(location)))
 
     def findClosestForecastToPoint(self, point):
-        iLat, closestByLatitude = ForecastImporter.__findClosestLocationToPointInPresortedList(self.__sortedByLatitude, point)
-        iLon, closestByLongitude = ForecastImporter.__findClosestLocationToPointInPresortedList(self.__sortedByLongitude, point)
+        iLat, closestByLatitude = Forecaster.__findClosestLocationToPointInPresortedList(self.__sortedByLatitude, point)
+        iLon, closestByLongitude = Forecaster.__findClosestLocationToPointInPresortedList(self.__sortedByLongitude, point)
 
-        smallestDistance, closestPoint = ForecastImporter.__findClosestPointToPoint(point, closestByLatitude, closestByLongitude)
+        smallestDistance, closestPoint = Forecaster.__findClosestPointToPoint(point, closestByLatitude, closestByLongitude)
 
         offsets = [iLat-1, iLat+1, iLon-1, iLon+1]
         while offsets != [-1,-1,-1,-1]:
@@ -34,7 +35,7 @@ class ForecastImporter:
                     otherPoint = data[locationIndex]
                     if (otherPoint[key] - closestPoint[key])**2 <= smallestDistance:
                         offsets[i] += -1 if i % 2 else 1
-                        smallestDistance, closestPoint = ForecastImporter.__getSmallerDistanceAndCloserPoint(smallestDistance, closestPoint, point, otherPoint)
+                        smallestDistance, closestPoint = Forecaster.__getSmallerDistanceAndCloserPoint(smallestDistance, closestPoint, point, otherPoint)
                     else:
                         offsets[i] = -1
 
@@ -43,13 +44,13 @@ class ForecastImporter:
     @staticmethod
     def __findClosestPointToPoint(exactPoint, *points):
         # Throw argument errors if points is empty
-        pointsWithDistances = [(ForecastImporter.__getDistanceBetween(exactPoint, point), point) for point in points]
+        pointsWithDistances = [(Forecaster.__getDistanceBetween(exactPoint, point), point) for point in points]
         sortedByDistance = sorted(pointsWithDistances, key=itemgetter(0))
         return sortedByDistance[0] if len(sortedByDistance) > 0  else (None, None)
 
     @staticmethod
     def __getSmallerDistanceAndCloserPoint(smallestDistance, closestPoint, queriedPoint, pointToCompareAgainst):
-        d = ForecastImporter.__getDistanceBetween(queriedPoint, pointToCompareAgainst)
+        d = Forecaster.__getDistanceBetween(queriedPoint, pointToCompareAgainst)
         if d < smallestDistance:
             return d, pointToCompareAgainst
 

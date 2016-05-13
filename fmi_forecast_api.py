@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from xml.dom.minidom import parseString
 from forecast import Forecast
 from os import environ
+from common import Point
 
 apiKey = environ['FMI_API_KEY']
 
@@ -35,7 +36,7 @@ def _findInElem(element, namespace, tag):
 
 def _parseForecast(wfsElement):
     (lat, lon) = _findInElem(wfsElement, 'gml', 'pos').item(0).firstChild.nodeValue.strip().split()
-    position = (float(lat), float(lon))
+    position = Point(float(lat), float(lon))
     time = _findInElem(wfsElement, 'BsWfs', 'Time').item(0).firstChild.nodeValue
     value = _findInElem(wfsElement, 'BsWfs', 'ParameterValue').item(0).firstChild.nodeValue
     return Forecast(position, time, value)

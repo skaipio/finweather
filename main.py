@@ -1,14 +1,14 @@
 from flask import Flask, request, abort
 
 import os
-import locationDataImporter
-import fmi_forecast
-from forecastImporter import ForecastImporter
+import locations
+import fmi_forecast_api
+from forecasting import Forecaster
 
 app = Flask(__name__)
-locationData = locationDataImporter.getLocationData()
-forecastData = ForecastImporter()
-forecastData.fetchData()
+locationData = locations.getLocationData()
+forecaster = Forecaster()
+forecaster.fetchData()
 
 @app.route("/forecast", methods=['GET'])
 def forecast():
@@ -18,10 +18,10 @@ def forecast():
 
     location = locationData.searchLocation(locationRequested)
 
-    if location is None or location is '':
+    if location is None:
         abort(404)
     else:
-        closestForecasts = forecastData.findClosestForecastToPoint((location['latitude'], location['longitude']))
+        closestForecasts = forecaster.findClosestForecastToPoint(location.point)
         return "<br>".join([str(forecast) for forecast in closestForecasts]) + "<br><br>" + str(location)
 
 if __name__ == "__main__":
